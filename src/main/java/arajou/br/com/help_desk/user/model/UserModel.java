@@ -44,7 +44,7 @@ public class UserModel {
 
     //auditoria
     @CreatedBy 
-    private String createdBY;
+    private String createdBy;
 
     @CreatedDate 
     private LocalDate createdOn;
