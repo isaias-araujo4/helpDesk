@@ -38,9 +38,11 @@ public class UserModel {
     @Column(length = 255, nullable = false)
     private String password;
 
-    //usado para  soft delete
+    //usado para soft delete
     @Column(nullable = false)
     private Boolean active = true;
+
+
 
     //auditoria
     @CreatedBy 
