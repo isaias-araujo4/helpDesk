@@ -22,7 +22,7 @@ public record UserCreatedDTO(
         String email,
 
         @NotBlank(message = "Required field")
-        @Size(min = 8, message = "Must be at least 9 characters")
+        @Size(min = 8, message = "Must be at least 8 characters")
         String password,
 
         @NotNull(message = "Required field")
