@@ -19,11 +19,11 @@ public class UserValidator {
     // Ponto de entrada chamado pelo Service antes de salvar/atualizar um usuário.
     public void validate(UserModel userModel){
         if (emailAlreadyExists(userModel)){
-            throw new DuplicatedRecordException("E-mail já cadastrado!");
+            throw new DuplicatedRecordException("Email already registered!");
         }
 
         if (nameAndDepartmentAlreadyExists(userModel)){
-            throw new DuplicatedRecordException("Já existe um usuário com esse nome, sobrenome e setor!");
+            throw new DuplicatedRecordException("A user with that first name, last name, and department already exists!");
         }
     }
 
