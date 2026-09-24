@@ -21,6 +21,10 @@ public class UserValidator {
         if (emailAlreadyExists(userModel)){
             throw new DuplicatedRecordException("E-mail já cadastrado!");
         }
+
+        if (nameAndDepartmentAlreadyExists(userModel)){
+            throw new DuplicatedRecordException("Já existe um usuário com esse nome, sobrenome e setor!");
+        }
     }
 
     // Regra: não pode existir outro usuário com o mesmo e-mail.
@@ -36,6 +40,21 @@ public class UserValidator {
         // Caso contrário, é uma atualização: só é duplicado se o e-mail encontrado
         // pertencer a outro usuário (id diferente do que está sendo atualizado) -
         // senão nunca seria possível salvar o próprio usuário sem trocar o e-mail.
+        return found.map(UserModel::getId).stream().anyMatch(id -> !id.equals(userModel.getId()));
+    }
+
+    // Regra: não pode existir outro usuário com a mesma combinação de nome + sobrenome + setor
+    // (regra explícita da especificação do projeto, reforçada também via unique constraint no banco).
+    private boolean nameAndDepartmentAlreadyExists(UserModel userModel){
+        Optional<UserModel> found = userRepository.findByFirstNameAndLastNameAndDepartment(
+                userModel.getFirstName(), userModel.getLastName(), userModel.getDepartment());
+
+        // Mesma lógica de create vs update do emailAlreadyExists: no cadastro, qualquer
+        // resultado já é duplicidade; na atualização, só conta se pertencer a outro usuário.
+        if (userModel.getId() == null){
+            return found.isPresent();
+        }
+
         return found.map(UserModel::getId).stream().anyMatch(id -> !id.equals(userModel.getId()));
     }
 }
