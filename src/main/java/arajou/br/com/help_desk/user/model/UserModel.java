@@ -31,10 +31,10 @@ public class UserModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 25, nullable = false)
+    @Column(length = 25, nullable = false, name = "first_name")
     private String firstName;
 
-    @Column(length = 25, nullable = false)
+    @Column(length = 25, nullable = false, name = "last_name")
     private String lastName;
 
     @Enumerated(EnumType.STRING)
@@ -48,6 +48,9 @@ public class UserModel {
     @Column(length = 255, nullable = false)
     private String password;
 
+    @Column(nullable = false, name = "must_change_password")
+    private boolean mustChangePassword = true;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 30, nullable = false)
     private UserRole role;
@@ -59,21 +62,27 @@ public class UserModel {
     //auditoria
     // Preenchido automaticamente pelo SpringSecurityAuditorAware na criação do registro.
     @CreatedBy
+    @Column(name = "created_by")
     private String createdBy;
 
     // Preenchido automaticamente com a data/hora da criação do registro.
     @CreatedDate
+    @Column(name = "created_on")
     private LocalDate createdOn;
 
+    @Column(name = "deleted_by")
     private String deletedBy;
 
+    @Column(name = "deleted_on")
     private LocalDate deletedOn;
 
     // Preenchido automaticamente pelo SpringSecurityAuditorAware a cada atualização do registro.
     @LastModifiedBy
+    @Column(name = "updated_by")
     private String updatedBy;
 
     // Preenchido automaticamente com a data/hora da última atualização do registro.
     @LastModifiedDate
+    @Column(name = "updated_on")
     private LocalDate updatedOn;
 }
