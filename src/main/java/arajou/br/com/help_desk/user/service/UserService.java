@@ -51,4 +51,10 @@ public class UserService {
         userRepository.save(userModel);
     }
 
+
+    public void changePassword(UserModel userModel, String newPassword){
+        userModel.setPassword(passwordEncoder.encode(newPassword));
+        userModel.setMustChangePassword(false);
+        userRepository.save(userModel);
+    }
 }
