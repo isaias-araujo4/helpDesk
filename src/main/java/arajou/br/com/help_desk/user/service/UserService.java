@@ -11,6 +11,8 @@ import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -21,6 +23,11 @@ public class UserService {
     private final TemporaryPasswordGenerator temporaryPasswordGenerator;
     private final EmailService emailService;
     private final AuditorAware<String> auditorAware;
+
+
+    public Optional<UserModel> findById(Long id){
+        return userRepository.findById(id);
+    }
 
     public UserModel save(UserModel userModel){
         userValidator.validate(userModel);
@@ -36,5 +43,6 @@ public class UserService {
         return saved;
     }
 
-    
+    public void update(UserModel)
+
 }
