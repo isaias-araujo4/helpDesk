@@ -11,6 +11,7 @@ import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Service
@@ -55,6 +56,13 @@ public class UserService {
     public void changePassword(UserModel userModel, String newPassword){
         userModel.setPassword(passwordEncoder.encode(newPassword));
         userModel.setMustChangePassword(false);
+        userRepository.save(userModel);
+    }
+
+    public void delete(UserModel userModel){
+        userModel.setActive(false);
+        userModel.setDeletedBy(auditorAware.getCurrentAuditor().orElse("system"));
+        userModel.setDeletedOn(LocalDate.now());
         userRepository.save(userModel);
     }
 }
