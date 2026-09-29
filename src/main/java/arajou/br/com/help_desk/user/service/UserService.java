@@ -43,6 +43,12 @@ public class UserService {
         return saved;
     }
 
-    public void update(UserModel)
+    public void update(UserModel userModel){
+        if (userModel.getId() == null){
+            throw new IllegalArgumentException("to update, the user must already be saved");
+        }
+        userValidator.validate(userModel);
+        userRepository.save(userModel);
+    }
 
 }
