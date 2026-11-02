@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 // Orquestra as operações de usuário: chama o Validator antes de persistir, e concentra
@@ -91,7 +92,7 @@ public class UserService {
     public Page<UserModel> search(
             String firstName,
             String lastName,
-            Department department,
+            List<Department> departments,
             Integer page,
             Integer pageSize
     ){
@@ -105,8 +106,8 @@ public class UserService {
             specs = specs.and(UserSpecs.lastNameLike(lastName));
         }
 
-        if (department != null){
-            specs = specs.and(UserSpecs.departmentEqual(department));
+        if (departments != null && !departments.isEmpty()){
+            specs = specs.and(UserSpecs.departmentIn(departments));
         }
 
         Pageable pageable = PageRequest.of(page, pageSize);

@@ -4,6 +4,8 @@ import arajou.br.com.help_desk.user.model.UserModel;
 import arajou.br.com.help_desk.user.model.enums.Department;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.List;
+
 public class UserSpecs {
 
     public static Specification<UserModel> firstNameLike(String firstName){
@@ -16,8 +18,8 @@ public class UserSpecs {
         cb.like(cb.upper(root.get("lastName")), "%" + lastName.toUpperCase() + "%");
     }
 
-    public static Specification<UserModel> departmentEqual(Department department){
+    public static Specification<UserModel> departmentIn(List<Department> departments){
         return (root, query, cb) ->
-                cb.equal(root.get("department"), department);
+                root.get("department").in(departments);
     }
 }

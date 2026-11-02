@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("users")
@@ -74,11 +75,11 @@ public class UserController implements GenericController {
     public ResponseEntity<Page<UserResponseDTO>> search(
             @RequestParam(value = "firstName", required = false) String firstName,
             @RequestParam(value = "lastName", required = false) String lastName,
-            @RequestParam(value = "department", required = false) Department department,
+            @RequestParam(value = "department", required = false)List<Department> departments,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize){
 
-        Page<UserModel> result = userService.search(firstName, lastName, department, page, pageSize);
+        Page<UserModel> result = userService.search(firstName, lastName, departments, page, pageSize);
         Page<UserResponseDTO> userResponseDTOPage = result.map(userMapper::toUserResponseDTO);
 
         return ResponseEntity.ok(userResponseDTOPage);
