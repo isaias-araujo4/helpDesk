@@ -4,10 +4,16 @@ package arajou.br.com.help_desk.user.service;
 import arajou.br.com.help_desk.email.EmailService;
 import arajou.br.com.help_desk.security.TemporaryPasswordGenerator;
 import arajou.br.com.help_desk.user.model.UserModel;
+import arajou.br.com.help_desk.user.model.enums.Department;
 import arajou.br.com.help_desk.user.repository.UserRepository;
 import arajou.br.com.help_desk.user.validator.UserValidator;
+import arajou.br.com.help_desk.user.repository.specs.UserSpecs;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -80,5 +86,31 @@ public class UserService {
         userModel.setDeletedBy(auditorAware.getCurrentAuditor().orElse("system"));
         userModel.setDeletedOn(LocalDate.now());
         userRepository.save(userModel);
+    }
+
+    public Page<UserModel> search(
+            String firstName,
+            String lastName,
+            Department department,
+            Integer page,
+            Integer pageSize
+    ){
+        Specification<UserModel> specs = Specification.where((root, query, cb) -> cb.conjunction());
+
+        if (firstName != null){
+            specs = specs.and(UserSpecs.firstNameLike(firstName));
+        }
+
+        if (lastName != null){
+            specs = specs.and(UserSpecs.lastNameLike(lastName));
+        }
+
+        if (department != null){
+            specs = specs.and(UserSpecs.departmentEqual(department));
+        }
+
+        Pageable pageable = PageRequest.of(page, pageSize);
+
+        return userRepository.findAll(specs, pageable);
     }
 }

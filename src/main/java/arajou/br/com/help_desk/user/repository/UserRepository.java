@@ -14,5 +14,5 @@ public interface UserRepository extends JpaRepository<UserModel, Long>, JpaSpeci
 
     Optional<UserModel>  findByFirstNameAndLastNameAndDepartment(String firstName, String lastName, Department department);
 
-    
+
 }
