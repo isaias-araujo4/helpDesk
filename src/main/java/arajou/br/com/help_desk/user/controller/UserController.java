@@ -6,9 +6,11 @@ import arajou.br.com.help_desk.user.model.UserModel;
 import arajou.br.com.help_desk.user.model.dto.UserCreatedDTO;
 import arajou.br.com.help_desk.user.model.dto.UserResponseDTO;
 import arajou.br.com.help_desk.user.model.dto.UserUpdatedDTO;
+import arajou.br.com.help_desk.user.model.enums.Department;
 import arajou.br.com.help_desk.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -65,5 +67,20 @@ public class UserController implements GenericController {
                     userService.delete(userModel);
                     return ResponseEntity.noContent().<Void>build();
                 }).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<Page<UserResponseDTO>> search(
+            @RequestParam(value = "firstName", required = false) String firstName,
+            @RequestParam(value = "lastName", required = false) String lastName,
+            @RequestParam(value = "department", required = false) Department department,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize){
+
+        Page<UserModel> result = userService.search(firstName, lastName, department, page, pageSize);
+        Page<UserResponseDTO> userResponseDTOPage = result.map(userMapper::toUserResponseDTO);
+
+        return ResponseEntity.ok(userResponseDTOPage);
     }
 }
