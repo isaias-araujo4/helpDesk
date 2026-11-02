@@ -8,12 +8,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
 @Table(
@@ -25,7 +30,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class) // Habilita o preenchimento automático dos campos @CreatedBy/@CreatedDate/@LastModifiedBy/@LastModifiedDate.
-public class UserModel {
+public class UserModel implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -85,4 +90,34 @@ public class UserModel {
     @LastModifiedDate
     @Column(name = "updated_on")
     private LocalDate updatedOn;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities(){
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
+
+    @Override
+    public String getUsername(){
+        return email;
+    }
+
+    @Override
+    public boolean isEnabled(){
+        return active;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 }
