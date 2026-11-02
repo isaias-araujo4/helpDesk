@@ -73,6 +73,14 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
+		<!-- Faz o Spring Boot carregar um arquivo .env na raiz do projeto automaticamente,
+		     funcionando igual pelo terminal (./mvnw spring-boot:run) ou pelo Run do VS Code. -->
+		<dependency>
+			<groupId>me.paulschwarz</groupId>
+			<artifactId>spring-dotenv</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
