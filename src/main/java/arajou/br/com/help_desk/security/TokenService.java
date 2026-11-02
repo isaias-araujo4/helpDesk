@@ -18,7 +18,7 @@ public class TokenService {
     @Value("${JWT_SECRET}")
     private String secret;
 
-    @Value("%{JWR_EXPIRATION}")
+    @Value("${JWT_EXPIRATION}")
     private Long expirationMillis;
 
     private SecretKey getSigKey(){
@@ -35,6 +35,7 @@ public class TokenService {
                 .claim("mustChangePassword", userModel.isMustChangePassword())
                 .issuedAt(now)
                 .expiration(expiration)
+                .signWith(getSigKey())
                 .compact();
     }
 
