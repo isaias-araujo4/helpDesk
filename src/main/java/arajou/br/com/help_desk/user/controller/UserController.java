@@ -50,7 +50,7 @@ public class UserController implements GenericController {
                     userModel.setDepartment(userUpdatedDTO.department());
                     userModel.setEmail(userUpdatedDTO.email());
                     userModel.setRole(userUpdatedDTO.role());
-                    
+
                     userService.update(userModel);
 
                     return ResponseEntity.noContent().<Void>build();
