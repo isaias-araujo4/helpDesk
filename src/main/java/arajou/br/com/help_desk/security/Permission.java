@@ -1,0 +1,17 @@
+package arajou.br.com.help_desk.security;
+
+public enum Permission {
+    CREATE_TICKET,
+    VIEW_OWN_TICKETS,
+    REOPEN_TICKET,
+    CLOSE_TICKET,
+    CANCEL_TICKET,
+    CREATE_COMPLAINT,
+    VIEW_PENDING_TICKETS,
+    ASSUME_TICKET,
+    COMMENT_TICKET,
+    RESOLVE_TICKET,
+    MANAGE_USERS,
+    VIEW_AUDIT_LOGS,
+    VIEW_REPORTS
+}
