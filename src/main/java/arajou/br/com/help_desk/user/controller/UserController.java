@@ -27,7 +27,7 @@ public class UserController implements GenericController {
     private final UserMapper userMapper;
 
     @PostMapping
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> create(@RequestBody @Valid UserCreatedDTO userCreatedDTO){
         UserModel user = userMapper.toEntity(userCreatedDTO);
         UserModel saved = userService.save(user);
@@ -36,7 +36,7 @@ public class UserController implements GenericController {
     }
 
     @GetMapping("{id}")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<UserResponseDTO> findById(@PathVariable Long id){
         return userService.findById(id)
                 .map(user -> ResponseEntity.ok(userMapper.toUserResponseDTO(user)))
@@ -44,7 +44,7 @@ public class UserController implements GenericController {
     }
 
     @PutMapping("{id}")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody @Valid UserUpdatedDTO userUpdatedDTO){
         return userService.findById(id)
                 .map(userModel -> {
@@ -57,7 +57,7 @@ public class UserController implements GenericController {
     }
 
     @DeleteMapping("{id}")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> delete(@PathVariable Long id){
         return userService.findById(id)
                 .map(userModel -> {
@@ -67,7 +67,7 @@ public class UserController implements GenericController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Page<UserResponseDTO>> search(
             @RequestParam(value = "firstName", required = false) String firstName,
             @RequestParam(value = "lastName", required = false) String lastName,
