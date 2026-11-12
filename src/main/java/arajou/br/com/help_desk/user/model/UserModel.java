@@ -1,7 +1,8 @@
 package arajou.br.com.help_desk.user.model;
 
+import arajou.br.com.help_desk.role.model.Role;
+import arajou.br.com.help_desk.security.Permission;
 import arajou.br.com.help_desk.user.model.enums.Department;
-import arajou.br.com.help_desk.user.model.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,7 +10,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -56,9 +58,19 @@ public class UserModel implements UserDetails {
     @Column(nullable = false, name = "must_change_password")
     private boolean mustChangePassword = true;
 
+    // Pacote de permissões atribuído pelo GERENTE/ADM - substituiu o antigo enum fixo.
+    // Nullable: um usuário pode, em tese, ter só permissões isoladas, sem nenhuma role.
+    @ManyToOne
+    @JoinColumn(name = "role_id")
+    private Role role;
+
+    // Permissões soltas atribuídas direto a este usuário, por cima do que a role já dá
+    // (ex: um TECNICO que também pode ver relatórios, sem precisar de uma role nova pra isso).
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_permissions", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
-    @Column(length = 30, nullable = false)
-    private UserRole role;
+    @Column(name = "permission")
+    private Set<Permission> extraPermissions;
 
     //usado para soft delete
     @Column(nullable = false)
@@ -91,9 +103,25 @@ public class UserModel implements UserDetails {
     @Column(name = "updated_on")
     private LocalDate updatedOn;
 
+    // Junta, numa lista só de GrantedAuthority: o nome da role (prefixado "ROLE_", pra
+    // continuar funcionando com hasRole(...) se algum @PreAuthorize ainda usar isso),
+    // cada Permission que a role carrega, e cada Permission isolada do próprio usuário.
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities(){
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        Set<GrantedAuthority> authorities = new HashSet<>();
+
+        if (role != null){
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
+            role.getPermissions().forEach(permission ->
+                    authorities.add(new SimpleGrantedAuthority(permission.name())));
+        }
+
+        if (extraPermissions != null){
+            extraPermissions.forEach(permission ->
+                    authorities.add(new SimpleGrantedAuthority(permission.name())));
+        }
+
+        return authorities;
     }
 
     @Override

@@ -48,11 +48,7 @@ public class UserController implements GenericController {
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody @Valid UserUpdatedDTO userUpdatedDTO){
         return userService.findById(id)
                 .map(userModel -> {
-                    userModel.setFirstName(userUpdatedDTO.firstName());
-                    userModel.setLastName(userUpdatedDTO.lastName());
-                    userModel.setDepartment(userUpdatedDTO.department());
-                    userModel.setEmail(userUpdatedDTO.email());
-                    userModel.setRole(userUpdatedDTO.role());
+                    userMapper.updateEntityFromDTO(userUpdatedDTO, userModel);
 
                     userService.update(userModel);
 

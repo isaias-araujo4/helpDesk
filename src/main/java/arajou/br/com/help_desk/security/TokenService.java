@@ -29,9 +29,13 @@ public class TokenService {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + expirationMillis);
 
+        // getRole() pode ser null agora (usuário sem role, só com permissões isoladas),
+        // por isso o null-check - essa claim é só informativa, não é usada pra autorizar nada.
+        String roleName = userModel.getRole() != null ? userModel.getRole().getName() : null;
+
         return Jwts.builder()
                 .subject(userModel.getEmail())
-                .claim("role", userModel.getRole().name())
+                .claim("role", roleName)
                 .claim("mustChangePassword", userModel.isMustChangePassword())
                 .issuedAt(now)
                 .expiration(expiration)
