@@ -59,4 +59,8 @@ public class TokenService {
                 .parseSignedClaims(token)
                 .getPayload();
     }
+
+    public boolean extractMustChangePassword(String token){
+        return parseClaims(token).get("mustChangePassword", Boolean.class);
+    }
 }

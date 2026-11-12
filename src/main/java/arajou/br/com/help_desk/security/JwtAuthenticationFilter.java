@@ -1,5 +1,7 @@
 package arajou.br.com.help_desk.security;
 
+import arajou.br.com.help_desk.exception.ErrorResponse;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,13 +15,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final String CHANGE_PASSWORD_PATH = "/auth/change-password";
+
     private final TokenService tokenService;
     private final CustomUserDetailsService userDetailsService;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(
@@ -44,6 +50,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         userDetails, null, userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                // Bloqueia qualquer endpoint (exceto o proprio change-password) enquanto o
+                // usuario ainda estiver na senha temporaria gerada no cadastro.
+                boolean mustChangePassword = tokenService.extractMustChangePassword(token);
+                boolean isChangePasswordRequest = request.getRequestURI().equals(CHANGE_PASSWORD_PATH);
+
+                if (mustChangePassword && !isChangePasswordRequest){
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    ErrorResponse errorResponse = new ErrorResponse(
+                            HttpServletResponse.SC_FORBIDDEN,
+                            "You must change your temporary password before continuing.",
+                            List.of());
+                    response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+                    return;
+                }
             }
         }
 

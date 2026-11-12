@@ -1,6 +1,7 @@
 package arajou.br.com.help_desk.user.service;
 
 
+import arajou.br.com.help_desk.auth.dto.ChangePasswordDTO;
 import arajou.br.com.help_desk.email.EmailService;
 import arajou.br.com.help_desk.security.TemporaryPasswordGenerator;
 import arajou.br.com.help_desk.user.model.UserModel;
@@ -8,14 +9,19 @@ import arajou.br.com.help_desk.user.model.enums.Department;
 import arajou.br.com.help_desk.user.repository.UserRepository;
 import arajou.br.com.help_desk.user.validator.UserValidator;
 import arajou.br.com.help_desk.user.repository.specs.UserSpecs;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
 import java.util.List;
