@@ -3,6 +3,7 @@ package arajou.br.com.help_desk.user.service;
 
 import arajou.br.com.help_desk.auth.dto.ChangePasswordDTO;
 import arajou.br.com.help_desk.email.EmailService;
+import arajou.br.com.help_desk.security.Permission;
 import arajou.br.com.help_desk.security.TemporaryPasswordGenerator;
 import arajou.br.com.help_desk.user.model.UserModel;
 import arajou.br.com.help_desk.user.model.enums.Department;
@@ -17,13 +18,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +44,7 @@ public class UserService {
     // Mesmo bean SpringSecurityAuditorAware, injetado aqui pelo tipo da interface -
     // usado manualmente no soft delete (deletedBy não é automático como createdBy/updatedBy).
     private final AuditorAware<String> auditorAware;
+    private final Permission permission;
 
 
     //método para buscar usuário por id
@@ -119,5 +122,22 @@ public class UserService {
         Pageable pageable = PageRequest.of(page, pageSize);
 
         return userRepository.findAll(specs, pageable);
+    }
+
+
+    public void addPermission(UserModel userModel, Permission permission){
+        if (userModel.getExtraPermissions() == null){
+            userModel.setExtraPermissions(new HashSet<>());
+        }
+
+        userModel.getExtraPermissions().add(permission);
+        userRepository.save(userModel);
+    }
+
+    public  void removePermission(UserModel userModel, Permission permission){
+        if (userModel.getExtraPermissions() != null){
+            userModel.getExtraPermissions().remove(permission);
+            userRepository.save(userModel);
+        }
     }
 }
