@@ -26,7 +26,6 @@ public class UserController implements GenericController {
 
     private final UserService userService;
     private final UserMapper userMapper;
-    private final Permission permission;
 
     @PostMapping
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
