@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tickets")
@@ -44,16 +44,16 @@ public class Ticket {
     private UserModel customer;
 
     @ManyToOne
-    @JoinColumn(name = "technican_id")
+    @JoinColumn(name = "technician_id")
     private UserModel technician;
 
     @Column(name = "resolved_at")
-    private LocalDate resolvedAt;
+    private LocalDateTime resolvedAt;
 
     @Column(name = "closed_at")
-    private LocalDate closedAt;
+    private LocalDateTime closedAt;
 
     @CreatedDate
     @Column(name = "created_on")
-    private LocalDate createdOn;
+    private LocalDateTime createdOn;
 }

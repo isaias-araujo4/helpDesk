@@ -58,4 +58,14 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleBadCredentialsException(BadCredentialsException e){
         return new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "Invalid email or password.", List.of());
     }
+
+    // Disparado pelo TicketValidator quando a ação viola uma regra de negócio: pular uma
+    // etapa do fluxo do chamado, ou um usuário tentar agir sobre um chamado que não é dele.
+    // 409 (conflito) porque a requisição em si é válida, só conflita com o estado atual
+    // do recurso ou com quem está autenticado.
+    @ExceptionHandler(OperationNotAllowedException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleOperationNotAllowedException(OperationNotAllowedException e){
+        return ErrorResponse.conflict(e.getMessage());
+    }
 }
