@@ -1,6 +1,7 @@
 package arajou.br.com.help_desk.user.controller;
 
 import arajou.br.com.help_desk.common.GenericController;
+import arajou.br.com.help_desk.security.Permission;
 import arajou.br.com.help_desk.user.mapper.UserMapper;
 import arajou.br.com.help_desk.user.model.UserModel;
 import arajou.br.com.help_desk.user.model.dto.UserCreatedDTO;
@@ -25,6 +26,7 @@ public class UserController implements GenericController {
 
     private final UserService userService;
     private final UserMapper userMapper;
+    private final Permission permission;
 
     @PostMapping
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
@@ -80,4 +82,25 @@ public class UserController implements GenericController {
 
         return ResponseEntity.ok(userResponseDTOPage);
     }
+
+    @PostMapping("{id}/permissions/{permission}")
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
+    public ResponseEntity<Void> addPermission(@PathVariable Long id, @PathVariable Permission permission){
+        return userService.findById(id)
+                .map(user -> {
+                    userService.addPermission(user, permission);
+                    return ResponseEntity.noContent().<Void>build();
+                }).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("{id}/permissions/{permission}")
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
+    public ResponseEntity<Void> removePermission(@PathVariable Long id, @PathVariable Permission permission){
+        return userService.findById(id)
+                .map(user -> {
+                    userService.removePermission(user, permission);
+                    return ResponseEntity.noContent().<Void>build();
+                }).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
 }
