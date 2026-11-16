@@ -7,7 +7,7 @@ import arajou.br.com.help_desk.user.model.UserModel;
 import org.springframework.stereotype.Component;
 
 @Component
-public class TicketValidador {
+public class TicketValidator {
 
     public void validateAssume(Ticket ticket){
         if (ticket.getStatus() != TicketStatus.PENDING){
