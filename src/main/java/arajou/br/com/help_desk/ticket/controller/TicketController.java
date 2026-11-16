@@ -7,10 +7,13 @@ import arajou.br.com.help_desk.ticket.model.Ticket;
 import arajou.br.com.help_desk.ticket.model.dto.TicketCreatedDTO;
 import arajou.br.com.help_desk.ticket.model.dto.TicketResponseDTO;
 import arajou.br.com.help_desk.ticket.model.dto.TicketUpdatedDTO;
+import arajou.br.com.help_desk.ticket.model.enums.TicketStatus;
+import arajou.br.com.help_desk.ticket.model.enums.TicketTheme;
 import arajou.br.com.help_desk.ticket.service.TicketService;
 import arajou.br.com.help_desk.ticket.validator.TicketValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -105,5 +108,19 @@ public class TicketController implements GenericController {
                     ticketService.reopen(ticket);
                     return ResponseEntity.noContent().<Void>build();
                 }).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('VIEW_OWN_TICKETS','VIEW_PENDING_TICKETS','VIEW_REPORTS')")
+    public ResponseEntity<Page<TicketResponseDTO>> search(
+            @RequestParam(value = "status", required = false) TicketStatus status,
+            @RequestParam(value = "theme", required = false) TicketTheme theme,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
+
+        Page<Ticket> result = ticketService.search(status, theme, page, pageSize);
+        Page<TicketResponseDTO> dtoPage = result.map(ticketMapper::toTicketResponseDTO);
+
+        return ResponseEntity.ok(dtoPage);
     }
 }

@@ -3,6 +3,7 @@ package arajou.br.com.help_desk.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -57,6 +58,15 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponse handleBadCredentialsException(BadCredentialsException e){
         return new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "Invalid email or password.", List.of());
+    }
+
+    // Disparado pelo Spring Security quando um @PreAuthorize nega acesso (usuário autenticado,
+    // mas sem a permissão exigida). Sem esse handler específico, caía no catch-all de
+    // RuntimeException abaixo e virava 500 em vez do 403 correto.
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleAuthorizationDeniedException(AuthorizationDeniedException e){
+        return new ErrorResponse(HttpStatus.FORBIDDEN.value(), "You do not have permission to perform this action.", List.of());
     }
 
     // Disparado pelo TicketValidator quando a ação viola uma regra de negócio: pular uma
