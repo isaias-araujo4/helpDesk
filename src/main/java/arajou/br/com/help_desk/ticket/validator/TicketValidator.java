@@ -59,4 +59,16 @@ public class TicketValidator {
             throw new OperationNotAllowedException("You are not allowed to perform this action on this ticket.");
         }
     }
+
+    public void validateView(Ticket ticket, UserModel authenticatedUser) {
+        boolean isOwner = ticket.getCustomer().getId().equals(authenticatedUser.getId());
+        boolean isAssignedTechnician = ticket.getTechnician() != null
+                && ticket.getTechnician().getId().equals(authenticatedUser.getId());
+        boolean isManager = authenticatedUser.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("VIEW_REPORTS"));
+
+        if (!isOwner && !isAssignedTechnician && !isManager) {
+            throw new OperationNotAllowedException("You are not allowed to view this ticket.");
+        }
+    }
 }
