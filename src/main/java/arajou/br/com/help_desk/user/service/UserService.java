@@ -10,6 +10,7 @@ import arajou.br.com.help_desk.user.repository.UserRepository;
 import arajou.br.com.help_desk.user.validator.UserValidator;
 import arajou.br.com.help_desk.user.repository.specs.UserSpecs;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +29,7 @@ import java.util.Optional;
 // métodos - quem decide "pode ou não pode" é o Validator, quem executa é este Service.
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
@@ -59,8 +61,16 @@ public class UserService {
         UserModel saved = userRepository.save(userModel);
 
         // Enviada depois do save: só faz sentido notificar o usuário se o cadastro
-        // realmente foi persistido com sucesso.
-        emailService.sendTemporaryPassword(saved.getEmail(), temporaryPassword);
+        // realmente foi persistido com sucesso. Falha no envio (ex: limite do provedor de
+        // e-mail) NÃO pode derrubar o cadastro - o usuário já existe no banco nesse ponto.
+        // Loga a senha temporária como rede de segurança: sem isso, uma falha de e-mail faria
+        // a senha se perder pra sempre (ela só existe em texto puro aqui, em memória).
+        try {
+            emailService.sendTemporaryPassword(saved.getEmail(), temporaryPassword);
+        } catch (RuntimeException e) {
+            log.error("Failed to send temporary password email to {}. Temporary password: {}",
+                    saved.getEmail(), temporaryPassword, e);
+        }
 
         return saved;
     }
