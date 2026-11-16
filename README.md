@@ -9,7 +9,7 @@ Projeto de estudo/portfólio, construído de forma incremental.
 | Módulo | Status |
 |---|---|
 | Usuários (cadastro, autenticação, autorização) | ✅ Completo |
-| Chamados (tickets) | 🚧 Planejado |
+| Chamados (tickets) | ✅ Completo |
 | Denúncias | 🚧 Planejado |
 | Relatórios e métricas | 🚧 Planejado |
 
@@ -22,7 +22,7 @@ Projeto de estudo/portfólio, construído de forma incremental.
 - **MapStruct** — mapeamento entre entidades e DTOs
 - **Lombok**
 - **Spring Mail** — envio de e-mail (testado com [Mailtrap](https://mailtrap.io))
-- **spring-dotenv** — carrega configuração sensível de um arquivo `.env`
+- Carregamento de `.env` via um `EnvironmentPostProcessor` próprio (a lib `spring-dotenv` não funciona com o Spring Boot 4.1.1)
 - **Maven**
 
 ## Como funciona
@@ -54,6 +54,14 @@ Toda entidade registra automaticamente quem criou/atualizou e quando (`createdBy
 
 Na primeira vez que a aplicação sobe com o banco vazio, são criados automaticamente: as roles padrão (`CUSTOMER`, `TECHNICIAN`, `MANAGER`, com as permissões correspondentes) e um usuário `MANAGER` inicial, com senha temporária impressa no console — necessário pra poder logar e começar a cadastrar os demais usuários.
 
+### Ciclo de vida do chamado (Ticket)
+
+Um chamado passa pelos estados `PENDING` → `IN_PROGRESS` → `RESOLVED` → `CLOSED`, nessa ordem estrita (não dá pra pular etapa). `CANCELLED` só é possível a partir de `PENDING`, e reabrir (`reopen`) volta de `RESOLVED`/`CLOSED` pra `IN_PROGRESS`, mantendo o mesmo técnico.
+
+Cada ação (criar, assumir, resolver, fechar, cancelar, reabrir, editar) é um endpoint dedicado — não um `PUT` genérico recebendo um status qualquer — e passa por duas camadas de autorização:
+1. **Permissão** (`@PreAuthorize`): o usuário tem a permissão necessária pra essa ação (ex: `RESOLVE_TICKET`)?
+2. **Dono do registro** (`TicketValidator`): é especificamente o cliente dono *deste* chamado, ou o técnico responsável *por este* chamado? Essa checagem não dá pra fazer só com `@PreAuthorize`, porque depende do dado concreto sendo acessado, não só do papel do usuário — sem ela, qualquer cliente com a permissão `VIEW_OWN_TICKETS` conseguiria ver o chamado de qualquer outro cliente.
+
 ## Endpoints
 
 ### Autenticação (`/auth`)
@@ -74,6 +82,22 @@ Todos exigem a permissão `MANAGE_USERS`.
 | GET | `/users` | Busca paginada, com filtros opcionais `firstName`, `lastName`, `department` (múltiplo), `page`, `pageSize` |
 | PUT | `/users/{id}` | Atualiza um usuário |
 | DELETE | `/users/{id}` | Desativa um usuário (soft delete) |
+
+### Chamados (`/tickets`)
+
+Cada rota exige uma permissão específica e, nas ações sobre um chamado já existente, também passa pela checagem de dono/técnico responsável (ver [Ciclo de vida do chamado](#ciclo-de-vida-do-chamado-ticket)).
+
+| Método | Rota | Descrição | Permissão |
+|---|---|---|---|
+| POST | `/tickets` | Cria um chamado (o cliente autenticado é sempre o dono) | `CREATE_TICKET` |
+| GET | `/tickets/{id}` | Busca um chamado por id | `VIEW_OWN_TICKETS`, `VIEW_PENDING_TICKETS` ou `VIEW_REPORTS` |
+| GET | `/tickets` | Busca paginada — cliente só vê os próprios, técnico vê `PENDING` + os seus, gerente vê todos. Filtros opcionais `status`, `theme`, `page`, `pageSize` | idem |
+| PUT | `/tickets/{id}` | Edita a descrição (só enquanto `PENDING`, só o dono) | `CREATE_TICKET` |
+| POST | `/tickets/{id}/assume` | Técnico assume o chamado (`PENDING` → `IN_PROGRESS`) | `ASSUME_TICKET` |
+| POST | `/tickets/{id}/resolve` | Técnico responsável resolve (`IN_PROGRESS` → `RESOLVED`) | `RESOLVE_TICKET` |
+| POST | `/tickets/{id}/close` | Cliente confirma e fecha (`RESOLVED` → `CLOSED`) | `CLOSE_TICKET` |
+| POST | `/tickets/{id}/cancel` | Cliente cancela (só a partir de `PENDING`) | `CANCEL_TICKET` |
+| POST | `/tickets/{id}/reopen` | Cliente reabre (`RESOLVED`/`CLOSED` → `IN_PROGRESS`) | `REOPEN_TICKET` |
 
 ## Como rodar o projeto
 
