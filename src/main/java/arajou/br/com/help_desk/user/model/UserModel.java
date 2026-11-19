@@ -3,10 +3,12 @@ package arajou.br.com.help_desk.user.model;
 import arajou.br.com.help_desk.role.model.Role;
 import arajou.br.com.help_desk.security.Permission;
 import arajou.br.com.help_desk.user.model.enums.Department;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -51,7 +53,12 @@ public class UserModel implements UserDetails {
     @Column(length = 50, nullable = false, unique = true)
     private String email;
 
-    //a senha é BCrypt
+    // A senha é BCrypt. @JsonIgnore: defesa extra contra vazar o hash caso essa entidade
+    // seja serializada por engano em algum response (hoje isso nunca acontece - só vai
+    // pro cliente via DTO - mas essa anotação garante que mesmo um erro futuro não vaze
+    // a senha). @ToString.Exclude: evita que o hash apareça em logs via toString() do Lombok.
+    @JsonIgnore
+    @ToString.Exclude
     @Column(length = 255, nullable = false)
     private String password;
 

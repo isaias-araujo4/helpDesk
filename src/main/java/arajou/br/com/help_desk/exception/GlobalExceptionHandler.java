@@ -78,4 +78,12 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleOperationNotAllowedException(OperationNotAllowedException e){
         return ErrorResponse.conflict(e.getMessage());
     }
+
+    // Disparado pelo LoginAttemptService quando um e-mail acumulou tentativas de login
+    // erradas demais - 429 (Too Many Requests) é o status HTTP padrão pra esse cenário.
+    @ExceptionHandler(TooManyLoginAttemptsException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public ErrorResponse handleTooManyLoginAttemptsException(TooManyLoginAttemptsException e){
+        return new ErrorResponse(HttpStatus.TOO_MANY_REQUESTS.value(), e.getMessage(), List.of());
+    }
 }
