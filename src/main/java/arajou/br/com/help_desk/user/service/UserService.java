@@ -1,6 +1,9 @@
 package arajou.br.com.help_desk.user.service;
 
 
+import arajou.br.com.help_desk.auditlog.model.enums.AuditAction;
+import arajou.br.com.help_desk.auditlog.model.enums.AuditEntityType;
+import arajou.br.com.help_desk.auditlog.service.AuditLogService;
 import arajou.br.com.help_desk.email.EmailService;
 import arajou.br.com.help_desk.security.Permission;
 import arajou.br.com.help_desk.security.TemporaryPasswordGenerator;
@@ -42,6 +45,7 @@ public class UserService {
     // Mesmo bean SpringSecurityAuditorAware, injetado aqui pelo tipo da interface -
     // usado manualmente no soft delete (deletedBy não é automático como createdBy/updatedBy).
     private final AuditorAware<String> auditorAware;
+    private final AuditLogService auditLogService;
 
     /**
      * Busca um usuário pelo id.
@@ -83,6 +87,7 @@ public class UserService {
                     saved.getEmail(), temporaryPassword, e);
         }
 
+        auditLogService.record(AuditAction.USER_CREATED, AuditEntityType.USER, saved.getId(), null);
         return saved;
     }
 
@@ -98,6 +103,7 @@ public class UserService {
         }
         userValidator.validate(userModel);
         userRepository.save(userModel);
+        auditLogService.record(AuditAction.USER_UPDATED, AuditEntityType.USER, userModel.getId(), null);
     }
 
     /**
@@ -125,6 +131,7 @@ public class UserService {
         userModel.setDeletedBy(auditorAware.getCurrentAuditor().orElse("system"));
         userModel.setDeletedOn(LocalDate.now());
         userRepository.save(userModel);
+        auditLogService.record(AuditAction.USER_DELETED, AuditEntityType.USER, userModel.getId(), null);
     }
 
     /**
@@ -178,6 +185,7 @@ public class UserService {
 
         userModel.getExtraPermissions().add(permission);
         userRepository.save(userModel);
+        auditLogService.record(AuditAction.PERMISSION_GRANTED, AuditEntityType.USER, userModel.getId(), permission.name());
     }
 
     /**
@@ -191,6 +199,7 @@ public class UserService {
         if (userModel.getExtraPermissions() != null){
             userModel.getExtraPermissions().remove(permission);
             userRepository.save(userModel);
+            auditLogService.record(AuditAction.PERMISSION_REVOKED, AuditEntityType.USER, userModel.getId(), permission.name());
         }
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -127,5 +128,36 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
     public ErrorResponse handleTooManyLoginAttemptsException(TooManyLoginAttemptsException e){
         return new ErrorResponse(HttpStatus.TOO_MANY_REQUESTS.value(), e.getMessage(), List.of());
+    }
+
+    /**
+     * Lançada pelo Service quando um id buscado não corresponde a nenhum registro no banco.
+     * Antes desse handler, alguns controllers devolviam 404 com corpo vazio (inconsistente
+     * com o formato {@link ErrorResponse} usado em todo o resto da API).
+     *
+     * @param e exception com a mensagem descrevendo o que não foi encontrado
+     * @return resposta 404
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleResourceNotFoundException(ResourceNotFoundException e){
+        return new ErrorResponse(HttpStatus.NOT_FOUND.value(), e.getMessage(), List.of());
+    }
+
+    /**
+     * Disparado quando um parâmetro de rota/query vem num formato que o Spring não consegue
+     * converter pro tipo esperado - ex: {@code ?status=ROSA} quando {@code status} é um enum
+     * {@code TicketStatus}, ou um {@code id} não numérico na URL. Sem esse handler, caía no
+     * catch-all de RuntimeException e virava 500; o erro é do cliente (entrada inválida), não
+     * do servidor, então o status correto é 400.
+     *
+     * @param e exception com o nome do parâmetro e o valor inválido recebido
+     * @return resposta 400
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e){
+        String message = String.format("Invalid value '%s' for parameter '%s'.", e.getValue(), e.getName());
+        return new ErrorResponse(HttpStatus.BAD_REQUEST.value(), message, List.of());
     }
 }

@@ -1,6 +1,7 @@
 package arajou.br.com.help_desk.user.controller;
 
 import arajou.br.com.help_desk.common.GenericController;
+import arajou.br.com.help_desk.exception.ResourceNotFoundException;
 import arajou.br.com.help_desk.security.Permission;
 import arajou.br.com.help_desk.user.mapper.UserMapper;
 import arajou.br.com.help_desk.user.model.UserModel;
@@ -27,6 +28,10 @@ import java.util.List;
 @RequestMapping("users") // Prefixo comum de rota para todos os endpoints desta classe
 @RequiredArgsConstructor // Lombok: gera um construtor com todos os campos "final" (injeção via construtor)
 public class UserController implements GenericController {
+
+    // Limite máximo de itens por página - evita que um cliente peça pageSize=999999 e
+    // force a aplicação a carregar a tabela inteira de uma vez.
+    private static final int MAX_PAGE_SIZE = 100;
 
     private final UserService userService;
     private final UserMapper userMapper;
@@ -56,9 +61,9 @@ public class UserController implements GenericController {
     @GetMapping("{id}") // Mapeia GET /users/{id} para este método
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<UserResponseDTO> findById(@PathVariable Long id){
-        return userService.findById(id)
-                .map(user -> ResponseEntity.ok(userMapper.toUserResponseDTO(user)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        UserModel user = userService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+        return ResponseEntity.ok(userMapper.toUserResponseDTO(user));
     }
 
     /**
@@ -71,14 +76,13 @@ public class UserController implements GenericController {
     @PutMapping("{id}") // Mapeia PUT /users/{id} para este método
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody @Valid UserUpdatedDTO userUpdatedDTO){
-        return userService.findById(id)
-                .map(userModel -> {
-                    userMapper.updateEntityFromDTO(userUpdatedDTO, userModel);
+        UserModel userModel = userService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
-                    userService.update(userModel);
+        userMapper.updateEntityFromDTO(userUpdatedDTO, userModel);
+        userService.update(userModel);
 
-                    return ResponseEntity.noContent().<Void>build();
-                }).orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -90,11 +94,11 @@ public class UserController implements GenericController {
     @DeleteMapping("{id}") // Mapeia DELETE /users/{id} para este método
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> delete(@PathVariable Long id){
-        return userService.findById(id)
-                .map(userModel -> {
-                    userService.delete(userModel);
-                    return ResponseEntity.noContent().<Void>build();
-                }).orElseGet(() -> ResponseEntity.notFound().build());
+        UserModel userModel = userService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+
+        userService.delete(userModel);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -116,7 +120,8 @@ public class UserController implements GenericController {
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize){
 
-        Page<UserModel> result = userService.search(firstName, lastName, departments, page, pageSize);
+        Page<UserModel> result = userService.search(
+                firstName, lastName, departments, page, Math.min(pageSize, MAX_PAGE_SIZE));
         Page<UserResponseDTO> userResponseDTOPage = result.map(userMapper::toUserResponseDTO);
 
         return ResponseEntity.ok(userResponseDTOPage);
@@ -132,11 +137,11 @@ public class UserController implements GenericController {
     @PostMapping("{id}/permissions/{permission}") // Mapeia POST /users/{id}/permissions/{permission}
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> addPermission(@PathVariable Long id, @PathVariable Permission permission){
-        return userService.findById(id)
-                .map(user -> {
-                    userService.addPermission(user, permission);
-                    return ResponseEntity.noContent().<Void>build();
-                }).orElseGet(() -> ResponseEntity.notFound().build());
+        UserModel user = userService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+
+        userService.addPermission(user, permission);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -149,11 +154,11 @@ public class UserController implements GenericController {
     @DeleteMapping("{id}/permissions/{permission}") // Mapeia DELETE /users/{id}/permissions/{permission}
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> removePermission(@PathVariable Long id, @PathVariable Permission permission){
-        return userService.findById(id)
-                .map(user -> {
-                    userService.removePermission(user, permission);
-                    return ResponseEntity.noContent().<Void>build();
-                }).orElseGet(() -> ResponseEntity.notFound().build());
+        UserModel user = userService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+
+        userService.removePermission(user, permission);
+        return ResponseEntity.noContent().build();
     }
 
 }

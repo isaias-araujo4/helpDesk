@@ -67,10 +67,11 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> {
                     // Únicas rotas acessíveis sem autenticação: login, e a documentação OpenAPI/Swagger.
                     authorize.requestMatchers(
-                            "/auth/login",
+                            "/api/v1/auth/login",
                             "/v3/api-docs/**",
                             "/swagger-ui/**",
-                            "/swagger-ui.html"
+                            "/swagger-ui.html",
+                            "/actuator/health"
                     ).permitAll();
                     // Qualquer outra rota exige um usuário autenticado (token JWT válido).
                     authorize.anyRequest().authenticated();

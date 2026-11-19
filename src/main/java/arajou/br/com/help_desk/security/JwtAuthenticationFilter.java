@@ -29,7 +29,7 @@ import java.util.List;
 @RequiredArgsConstructor // Lombok: gera um construtor com todos os campos "final" (injeção via construtor)
 public class JwtAuthenticationFilter extends OncePerRequestFilter { // OncePerRequestFilter: garante que o filtro roda só uma vez por requisição, mesmo com forward/include internos
 
-    private static final String CHANGE_PASSWORD_PATH = "/auth/change-password";
+    private static final String CHANGE_PASSWORD_PATH = "/api/v1/auth/change-password";
 
     private final TokenService tokenService;
     private final CustomUserDetailsService userDetailsService;

@@ -37,6 +37,13 @@
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 
+		<!-- Expoe /actuator/health - endpoint padrao pra ferramentas de monitoramento/orquestracao
+		     checarem se a aplicacao esta de pe e consegue falar com o banco -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
 		<!-- Controle de schema via migrations versionadas (substitui ddl-auto=update).
 		     No Boot 4, a auto-configuracao de cada tecnologia virou um modulo proprio -
 		     "flyway-core" sozinho nao basta, precisa do "spring-boot-flyway" tambem. -->

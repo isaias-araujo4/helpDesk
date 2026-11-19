@@ -1,6 +1,7 @@
 package arajou.br.com.help_desk.ticket.controller;
 
 import arajou.br.com.help_desk.common.GenericController;
+import arajou.br.com.help_desk.exception.ResourceNotFoundException;
 import arajou.br.com.help_desk.security.SecurityService;
 import arajou.br.com.help_desk.ticket.mapper.TicketMapper;
 import arajou.br.com.help_desk.ticket.model.Ticket;
@@ -30,6 +31,10 @@ import java.net.URI;
 @RequestMapping("tickets") // Prefixo comum de rota para todos os endpoints desta classe
 @RequiredArgsConstructor // Lombok: gera um construtor com todos os campos "final" (injeção via construtor)
 public class TicketController implements GenericController {
+
+    // Limite máximo de itens por página - evita que um cliente peça pageSize=999999 e
+    // force a aplicação a carregar a tabela inteira de uma vez.
+    private static final int MAX_PAGE_SIZE = 100;
 
     private final TicketService ticketService;
     private final TicketMapper ticketMapper;
@@ -62,12 +67,11 @@ public class TicketController implements GenericController {
     @GetMapping("{id}") // Mapeia GET /tickets/{id} para este método
     @PreAuthorize("hasAnyAuthority('VIEW_OWN_TICKETS','VIEW_PENDING_TICKETS','VIEW_REPORTS')")
     public ResponseEntity<TicketResponseDTO> findById(@PathVariable Long id) {
-        return ticketService.findById(id)
-                .map(ticket -> {
-                    ticketValidator.validateView(ticket, securityService.getAuthenticatedUser());
-                    return ResponseEntity.ok(ticketMapper.toTicketResponseDTO(ticket));
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        Ticket ticket = ticketService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found."));
+
+        ticketValidator.validateView(ticket, securityService.getAuthenticatedUser());
+        return ResponseEntity.ok(ticketMapper.toTicketResponseDTO(ticket));
     }
 
     /**
@@ -82,11 +86,11 @@ public class TicketController implements GenericController {
     @PutMapping("{id}") // Mapeia PUT /tickets/{id} para este método
     @PreAuthorize("hasAuthority('CREATE_TICKET')")
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody @Valid TicketUpdatedDTO ticketUpdatedDTO) {
-        return ticketService.findById(id)
-                .map(ticket -> {
-                    ticketService.updateDescription(ticket, ticketUpdatedDTO.description());
-                    return ResponseEntity.noContent().<Void>build();
-                }).orElseGet(() -> ResponseEntity.notFound().build());
+        Ticket ticket = ticketService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found."));
+
+        ticketService.updateDescription(ticket, ticketUpdatedDTO.description());
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -98,11 +102,11 @@ public class TicketController implements GenericController {
     @PostMapping("{id}/assume") // Mapeia POST /tickets/{id}/assume para este método
     @PreAuthorize("hasAuthority('ASSUME_TICKET')")
     public ResponseEntity<Void> assume(@PathVariable Long id) {
-        return ticketService.findById(id)
-                .map(ticket -> {
-                    ticketService.assume(ticket);
-                    return ResponseEntity.noContent().<Void>build();
-                }).orElseGet(() -> ResponseEntity.notFound().build());
+        Ticket ticket = ticketService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found."));
+
+        ticketService.assume(ticket);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -114,11 +118,11 @@ public class TicketController implements GenericController {
     @PostMapping("{id}/resolve") // Mapeia POST /tickets/{id}/resolve para este método
     @PreAuthorize("hasAuthority('RESOLVE_TICKET')")
     public ResponseEntity<Void> resolve(@PathVariable Long id) {
-        return ticketService.findById(id)
-                .map(ticket -> {
-                    ticketService.resolve(ticket);
-                    return ResponseEntity.noContent().<Void>build();
-                }).orElseGet(() -> ResponseEntity.notFound().build());
+        Ticket ticket = ticketService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found."));
+
+        ticketService.resolve(ticket);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -130,11 +134,11 @@ public class TicketController implements GenericController {
     @PostMapping("{id}/close") // Mapeia POST /tickets/{id}/close para este método
     @PreAuthorize("hasAuthority('CLOSE_TICKET')")
     public ResponseEntity<Void> close(@PathVariable Long id) {
-        return ticketService.findById(id)
-                .map(ticket -> {
-                    ticketService.close(ticket);
-                    return ResponseEntity.noContent().<Void>build();
-                }).orElseGet(() -> ResponseEntity.notFound().build());
+        Ticket ticket = ticketService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found."));
+
+        ticketService.close(ticket);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -146,11 +150,11 @@ public class TicketController implements GenericController {
     @PostMapping("{id}/cancel") // Mapeia POST /tickets/{id}/cancel para este método
     @PreAuthorize("hasAuthority('CANCEL_TICKET')")
     public ResponseEntity<Void> cancel(@PathVariable Long id) {
-        return ticketService.findById(id)
-                .map(ticket -> {
-                    ticketService.cancel(ticket);
-                    return ResponseEntity.noContent().<Void>build();
-                }).orElseGet(() -> ResponseEntity.notFound().build());
+        Ticket ticket = ticketService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found."));
+
+        ticketService.cancel(ticket);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -162,11 +166,11 @@ public class TicketController implements GenericController {
     @PostMapping("{id}/reopen") // Mapeia POST /tickets/{id}/reopen para este método
     @PreAuthorize("hasAuthority('REOPEN_TICKET')")
     public ResponseEntity<Void> reopen(@PathVariable Long id) {
-        return ticketService.findById(id)
-                .map(ticket -> {
-                    ticketService.reopen(ticket);
-                    return ResponseEntity.noContent().<Void>build();
-                }).orElseGet(() -> ResponseEntity.notFound().build());
+        Ticket ticket = ticketService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found."));
+
+        ticketService.reopen(ticket);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -187,7 +191,7 @@ public class TicketController implements GenericController {
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
 
-        Page<Ticket> result = ticketService.search(status, theme, page, pageSize);
+        Page<Ticket> result = ticketService.search(status, theme, page, Math.min(pageSize, MAX_PAGE_SIZE));
         Page<TicketResponseDTO> dtoPage = result.map(ticketMapper::toTicketResponseDTO);
 
         return ResponseEntity.ok(dtoPage);

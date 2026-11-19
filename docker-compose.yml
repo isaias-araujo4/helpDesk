@@ -1,0 +1,45 @@
+services:
+  # Banco MySQL isolado dentro do Docker - não é o mesmo MySQL instalado localmente na
+  # máquina, por isso usa uma senha fixa própria (help_desk_root_pw), não a do .env.
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: help_desk
+      MYSQL_ROOT_PASSWORD: help_desk_root_pw
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    # Garante que o "app" só sobe DEPOIS que o MySQL já aceita conexões de verdade,
+    # não só depois que o container iniciou (healthcheck real, não só "started").
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-phelp_desk_root_pw"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      DATASOURCE_URL: jdbc:mysql://mysql:3306/help_desk?createDatabaseIfNotExist=true
+      DATASOURCE_USERNAME: root
+      DATASOURCE_PASSWORD: help_desk_root_pw
+      # As demais variáveis (e-mail, JWT, CORS) vêm do arquivo .env na raiz do projeto -
+      # o Docker Compose carrega esse .env automaticamente, sem configuração extra.
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+
+volumes:
+  mysql_data:

@@ -1,0 +1,59 @@
+name: CI
+
+# Roda em todo push/PR pra main - pega "esqueci de testar antes de subir" na hora,
+# e mostra pra quem olhar o repositório que o projeto realmente compila (e, quando os
+# testes do item 1 existirem, que eles passam).
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # Banco MySQL real disponível durante o job, igual ao que a aplicação usa em
+    # produção/local - evita "passou no CI mas quebra com MySQL de verdade".
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: help_desk
+          MYSQL_ROOT_PASSWORD: help_desk_root_pw
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -phelp_desk_root_pw"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    # Valores dummy pras variáveis que a aplicação exige pra subir (ver
+    # DotenvEnvironmentPostProcessor) - não são credenciais reais, só o suficiente pro
+    # contexto do Spring inicializar durante os testes de integração.
+    env:
+      DATASOURCE_URL: jdbc:mysql://localhost:3306/help_desk
+      DATASOURCE_USERNAME: root
+      DATASOURCE_PASSWORD: help_desk_root_pw
+      MAIL_HOST: sandbox.smtp.mailtrap.io
+      MAIL_PORT: 2525
+      MAIL_USERNAME: ci_dummy_user
+      MAIL_PASSWORD: ci_dummy_password
+      JWT_SECRET: ci_dummy_secret_at_least_32_characters_long
+      JWT_EXPIRATION: 3600000
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build and run tests
+        run: ./mvnw -B clean verify

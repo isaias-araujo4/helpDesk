@@ -1,5 +1,8 @@
 package arajou.br.com.help_desk.ticket.service;
 
+import arajou.br.com.help_desk.auditlog.model.enums.AuditAction;
+import arajou.br.com.help_desk.auditlog.model.enums.AuditEntityType;
+import arajou.br.com.help_desk.auditlog.service.AuditLogService;
 import arajou.br.com.help_desk.security.SecurityService;
 import arajou.br.com.help_desk.ticket.model.Ticket;
 import arajou.br.com.help_desk.ticket.model.enums.TicketStatus;
@@ -30,6 +33,7 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final TicketValidator ticketValidator;
     private final SecurityService securityService;
+    private final AuditLogService auditLogService;
 
     /**
      * Busca um chamado pelo id.
@@ -51,7 +55,9 @@ public class TicketService {
      */
     public Ticket save(Ticket ticket) {
         ticket.setCustomer(securityService.getAuthenticatedUser());
-        return ticketRepository.save(ticket);
+        Ticket saved = ticketRepository.save(ticket);
+        auditLogService.record(AuditAction.TICKET_CREATED, AuditEntityType.TICKET, saved.getId(), null);
+        return saved;
     }
 
     /**
@@ -65,6 +71,7 @@ public class TicketService {
         ticketValidator.validateEdit(ticket, securityService.getAuthenticatedUser());
         ticket.setDescription(newDescription);
         ticketRepository.save(ticket);
+        auditLogService.record(AuditAction.TICKET_EDITED, AuditEntityType.TICKET, ticket.getId(), null);
     }
 
     /**
@@ -77,6 +84,7 @@ public class TicketService {
         ticket.setTechnician(securityService.getAuthenticatedUser());
         ticket.setStatus(TicketStatus.IN_PROGRESS);
         ticketRepository.save(ticket);
+        auditLogService.record(AuditAction.TICKET_ASSUMED, AuditEntityType.TICKET, ticket.getId(), null);
     }
 
     /**
@@ -90,6 +98,7 @@ public class TicketService {
         ticket.setStatus(TicketStatus.RESOLVED);
         ticket.setResolvedAt(LocalDateTime.now());
         ticketRepository.save(ticket);
+        auditLogService.record(AuditAction.TICKET_RESOLVED, AuditEntityType.TICKET, ticket.getId(), null);
     }
 
     /**
@@ -103,6 +112,7 @@ public class TicketService {
         ticket.setStatus(TicketStatus.CLOSED);
         ticket.setClosedAt(LocalDateTime.now());
         ticketRepository.save(ticket);
+        auditLogService.record(AuditAction.TICKET_CLOSED, AuditEntityType.TICKET, ticket.getId(), null);
     }
 
     /**
@@ -115,6 +125,7 @@ public class TicketService {
         ticketValidator.validateCancel(ticket, authenticatedUser);
         ticket.setStatus(TicketStatus.CANCELLED);
         ticketRepository.save(ticket);
+        auditLogService.record(AuditAction.TICKET_CANCELLED, AuditEntityType.TICKET, ticket.getId(), null);
     }
 
     /**
@@ -131,6 +142,7 @@ public class TicketService {
         ticket.setResolvedAt(null);
         ticket.setClosedAt(null);
         ticketRepository.save(ticket);
+        auditLogService.record(AuditAction.TICKET_REOPENED, AuditEntityType.TICKET, ticket.getId(), null);
     }
 
     /**
