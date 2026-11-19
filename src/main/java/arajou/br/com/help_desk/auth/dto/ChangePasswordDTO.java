@@ -3,9 +3,12 @@ package arajou.br.com.help_desk.auth.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Corpo da requisição de troca de senha ({@code PUT /auth/change-password}).
+ */
 public record ChangePasswordDTO(
         @NotBlank(message = "Required field")
-        @Size(min = 8, message = "Must be at least 8 characters")
+        @Size(min = 8, message = "Must be at least 8 characters") // Exigência mínima de segurança para a nova senha
         String newPassword
 ) {
 }

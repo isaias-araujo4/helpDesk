@@ -5,6 +5,11 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Corpo da requisição de atualização de usuário ({@code PUT /users/{id}}, feito pelo
+ * MANAGER). A role é editável aqui porque só quem já tem a permissão MANAGE_USERS
+ * (um MANAGER) pode chamar esse endpoint.
+ */
 public record UserUpdatedDTO(
         @NotBlank(message = "Required field")
         String firstName,

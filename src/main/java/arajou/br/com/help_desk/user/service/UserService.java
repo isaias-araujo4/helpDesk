@@ -24,12 +24,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
-// Orquestra as operações de usuário: chama o Validator antes de persistir, e concentra
-// as regras de senha temporária, criptografia e soft delete. O Controller só chama esses
-// métodos - quem decide "pode ou não pode" é o Validator, quem executa é este Service.
-@Service
-@RequiredArgsConstructor
-@Slf4j
+/**
+ * Orquestra as operações de usuário: chama o {@link UserValidator} antes de persistir, e
+ * concentra as regras de senha temporária, criptografia e soft delete. O Controller só
+ * chama esses métodos - quem decide "pode ou não pode" é o Validator, quem executa é este Service.
+ */
+@Service // Registra a classe como bean de camada de serviço, gerenciado pelo Spring
+@RequiredArgsConstructor // Lombok: gera um construtor com todos os campos "final" (injeção via construtor)
+@Slf4j // Lombok: gera o campo "log" (logger) para a classe
 public class UserService {
 
     private final UserRepository userRepository;
@@ -41,15 +43,24 @@ public class UserService {
     // usado manualmente no soft delete (deletedBy não é automático como createdBy/updatedBy).
     private final AuditorAware<String> auditorAware;
 
-
-    //método para buscar usuário por id
+    /**
+     * Busca um usuário pelo id.
+     *
+     * @param id id do usuário
+     * @return o usuário, se existir
+     */
     public Optional<UserModel> findById(Long id){
         return userRepository.findById(id);
     }
 
-    // Cadastro de um novo usuário (feito pelo MANAGER). O cliente nunca envia senha:
-    // o sistema gera uma temporária, salva já criptografada e manda por e-mail em texto puro
-    // (só nesse momento ela existe em texto puro, antes de virar hash).
+    /**
+     * Cadastro de um novo usuário (feito pelo MANAGER). O cliente nunca envia senha:
+     * o sistema gera uma temporária, salva já criptografada e manda por e-mail em texto puro
+     * (só nesse momento ela existe em texto puro, antes de virar hash).
+     *
+     * @param userModel usuário a ser criado (ainda sem id/senha)
+     * @return o usuário já salvo, com id gerado
+     */
     public UserModel save(UserModel userModel){
         userValidator.validate(userModel);
 
@@ -75,7 +86,12 @@ public class UserService {
         return saved;
     }
 
-    // Atualização de dados de um usuário já existente (feita pelo MANAGER).
+    /**
+     * Atualização de dados de um usuário já existente (feita pelo MANAGER).
+     *
+     * @param userModel usuário já carregado do banco, com os novos dados já aplicados
+     * @throws IllegalArgumentException se o usuário ainda não tiver sido salvo (sem id)
+     */
     public void update(UserModel userModel){
         if (userModel.getId() == null){
             throw new IllegalArgumentException("to update, the user must already be saved");
@@ -84,16 +100,26 @@ public class UserService {
         userRepository.save(userModel);
     }
 
-    // Troca a senha temporária (ou qualquer senha atual) por uma definitiva escolhida
+    /**
+     * Troca a senha temporária (ou qualquer senha atual) por uma definitiva escolhida
+     * pelo próprio usuário, e desliga a flag de troca obrigatória.
+     *
+     * @param userModel usuário autenticado trocando a própria senha
+     * @param newPassword nova senha, em texto puro (será criptografada aqui)
+     */
     public void changePassword(UserModel userModel, String newPassword){
         userModel.setPassword(passwordEncoder.encode(newPassword));
         userModel.setMustChangePassword(false);
         userRepository.save(userModel);
     }
 
-    // Soft delete: nunca remove a linha do banco, só marca como inativo e registra
-    // quem/quando desativou. deletedBy/deletedOn não são automáticos (diferente de
-    // createdBy/updatedBy), por isso são preenchidos manualmente aqui.
+    /**
+     * Soft delete: nunca remove a linha do banco, só marca como inativo e registra
+     * quem/quando desativou. deletedBy/deletedOn não são automáticos (diferente de
+     * createdBy/updatedBy), por isso são preenchidos manualmente aqui.
+     *
+     * @param userModel usuário a ser desativado
+     */
     public void delete(UserModel userModel){
         userModel.setActive(false);
         userModel.setDeletedBy(auditorAware.getCurrentAuditor().orElse("system"));
@@ -101,6 +127,17 @@ public class UserService {
         userRepository.save(userModel);
     }
 
+    /**
+     * Busca paginada de usuários, com filtros opcionais e independentes entre si (só
+     * entram no WHERE os que forem informados).
+     *
+     * @param firstName filtro opcional por trecho do nome
+     * @param lastName filtro opcional por trecho do sobrenome
+     * @param departments filtro opcional por uma lista de setores
+     * @param page número da página (começando em 0)
+     * @param pageSize tamanho da página
+     * @return a página de resultados
+     */
     public Page<UserModel> search(
             String firstName,
             String lastName,
@@ -128,6 +165,12 @@ public class UserService {
     }
 
 
+    /**
+     * Concede uma permissão isolada ao usuário, além das que a role dele já dá.
+     *
+     * @param userModel usuário a receber a permissão
+     * @param permission permissão a conceder
+     */
     public void addPermission(UserModel userModel, Permission permission){
         if (userModel.getExtraPermissions() == null){
             userModel.setExtraPermissions(new HashSet<>());
@@ -137,6 +180,13 @@ public class UserService {
         userRepository.save(userModel);
     }
 
+    /**
+     * Remove uma permissão isolada do usuário. Não afeta as permissões que vêm da role
+     * dele - só as concedidas individualmente via {@link #addPermission}.
+     *
+     * @param userModel usuário a perder a permissão
+     * @param permission permissão a remover
+     */
     public  void removePermission(UserModel userModel, Permission permission){
         if (userModel.getExtraPermissions() != null){
             userModel.getExtraPermissions().remove(permission);

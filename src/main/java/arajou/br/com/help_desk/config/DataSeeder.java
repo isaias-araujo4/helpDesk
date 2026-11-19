@@ -16,17 +16,28 @@ import org.springframework.stereotype.Component;
 import java.util.HashSet;
 import java.util.Set;
 
-@Component
-@RequiredArgsConstructor
-@Slf4j
-public class DataSeeder implements CommandLineRunner {
+/**
+ * Popula o banco com os dados mínimos para a aplicação funcionar logo no primeiro start:
+ * as 3 roles padrão (CUSTOMER, TECHNICIAN, MANAGER) com suas permissões, e um usuário
+ * MANAGER inicial (para poder logar e cadastrar os demais usuários pela API).
+ */
+@Component // Registra a classe como bean gerenciado pelo Spring
+@RequiredArgsConstructor // Lombok: gera um construtor com todos os campos "final" (injeção via construtor)
+@Slf4j // Lombok: gera o campo "log" (logger) para a classe
+public class DataSeeder implements CommandLineRunner { // CommandLineRunner: o Spring Boot chama run() automaticamente logo após a aplicação subir
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TemporaryPasswordGenerator temporaryPasswordGenerator;
 
-    @Override
+    /**
+     * Executado uma única vez, automaticamente, após o contexto do Spring subir.
+     * Não faz nada se já existir algum usuário (evita recriar o seed em todo restart).
+     *
+     * @param args argumentos de linha de comando repassados pelo Spring Boot (não usados aqui)
+     */
+    @Override // Sobrescreve o método da interface CommandLineRunner
     public void run(String... args){
         if (userRepository.count() > 0){
             return;
@@ -75,6 +86,13 @@ public class DataSeeder implements CommandLineRunner {
         log.info("==============================================");
     }
 
+    /**
+     * Cria e persiste uma {@link Role} com o nome e o conjunto de permissões informados.
+     *
+     * @param name nome da role (ex: "CUSTOMER")
+     * @param permissions permissões concedidas a quem tiver essa role
+     * @return a role já salva no banco, com id gerado
+     */
     private Role createRole(String name, Set<Permission> permissions){
         Role role = new Role();
         role.setName(name);

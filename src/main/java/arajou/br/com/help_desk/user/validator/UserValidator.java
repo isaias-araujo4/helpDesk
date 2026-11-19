@@ -8,15 +8,22 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
-// Concentra as regras de negócio de validação do User, separadas do Service
-// (o Service só orquestra; quem decide se pode salvar ou não é o Validator).
-@Component
-@RequiredArgsConstructor
+/**
+ * Concentra as regras de negócio de validação do {@link UserModel}, separadas do Service
+ * (o Service só orquestra; quem decide se pode salvar ou não é o Validator).
+ */
+@Component // Registra a classe como bean gerenciado pelo Spring
+@RequiredArgsConstructor // Lombok: gera um construtor com todos os campos "final" (injeção via construtor)
 public class UserValidator {
 
     private final UserRepository userRepository;
 
-    // Ponto de entrada chamado pelo Service antes de salvar/atualizar um usuário.
+    /**
+     * Ponto de entrada chamado pelo Service antes de salvar/atualizar um usuário.
+     * Lança {@link DuplicatedRecordException} se alguma regra de unicidade for violada.
+     *
+     * @param userModel usuário a validar (novo ou já existente, sendo atualizado)
+     */
     public void validate(UserModel userModel){
         if (emailAlreadyExists(userModel)){
             throw new DuplicatedRecordException("Email already registered!");

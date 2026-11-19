@@ -10,6 +10,11 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.springframework.beans.factory.annotation.Autowired;
 
+/**
+ * Converte entre {@link UserModel} e os DTOs de usuário, poupando o Controller/Service de
+ * copiar campo por campo manualmente. A implementação concreta é gerada automaticamente
+ * pelo MapStruct em tempo de compilação.
+ */
 // componentModel = "spring": faz o MapStruct gerar a implementação como um @Component,
 // para poder ser injetada em outras classes (ex: UserService) via construtor.
 // Precisa ser "abstract class" (não interface) porque usa o roleRepository nas
@@ -17,23 +22,38 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Mapper(componentModel = "spring")
 public abstract class UserMapper {
 
-    @Autowired
+    @Autowired // Injeção por campo (necessária aqui - MapStruct gera uma subclasse da classe abstrata, então o Spring injeta via @Autowired em vez de construtor)
     protected RoleRepository roleRepository;
 
-    // Converte o DTO de cadastro (dados vindos do cliente) na entidade que será persistida.
-    // O MapStruct casa os campos automaticamente pelo nome (firstName -> firstName, etc.).
-    // "role" é especial: o DTO só manda o roleId, então buscamos a Role de verdade no banco.
+    /**
+     * Converte o DTO de cadastro (dados vindos do cliente) na entidade que será persistida.
+     * O MapStruct casa os campos automaticamente pelo nome (firstName -> firstName, etc.).
+     * "role" é especial: o DTO só manda o roleId, então buscamos a Role de verdade no banco.
+     *
+     * @param dto dados de cadastro vindos da requisição
+     * @return a entidade pronta para ser salva (sem id, sem senha ainda)
+     */
     @Mapping(target = "role", expression = "java( dto.roleId() != null ? roleRepository.findById(dto.roleId()).orElse(null) : null )")
     public abstract UserModel toEntity(UserCreatedDTO dto);
 
-    // Atualiza uma entidade já existente com os dados do DTO de atualização (usado no
-    // PUT /users/{id}), em vez de copiar campo por campo manualmente no Controller.
+    /**
+     * Atualiza uma entidade já existente com os dados do DTO de atualização (usado no
+     * {@code PUT /users/{id}}), em vez de copiar campo por campo manualmente no Controller.
+     *
+     * @param dto novos dados vindos da requisição
+     * @param entity entidade já carregada do banco, atualizada em memória (não salva aqui)
+     */
     @Mapping(target = "role", expression = "java( dto.roleId() != null ? roleRepository.findById(dto.roleId()).orElse(null) : null )")
     public abstract void updateEntityFromDTO(UserUpdatedDTO dto, @MappingTarget UserModel entity);
 
-    // Converte a entidade salva no banco no DTO de resposta da API.
-    // Como UserResponseDTO não tem campo "password", o MapStruct simplesmente o ignora
-    // na conversão - a senha nunca é exposta na resposta.
+    /**
+     * Converte a entidade salva no banco no DTO de resposta da API.
+     * Como {@link UserResponseDTO} não tem campo "password", o MapStruct simplesmente o
+     * ignora na conversão - a senha nunca é exposta na resposta.
+     *
+     * @param user entidade a converter
+     * @return o DTO de resposta, pronto para ser serializado em JSON
+     */
     @Mapping(target = "roleId", expression = "java( user.getRole() != null ? user.getRole().getId() : null )")
     @Mapping(target = "roleName", expression = "java( user.getRole() != null ? user.getRole().getName() : null )")
     public abstract UserResponseDTO toUserResponseDTO(UserModel user);

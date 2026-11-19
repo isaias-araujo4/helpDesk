@@ -5,15 +5,24 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 
-// Implementação de EmailService que envia de verdade via SMTP, usando o JavaMailSender
-// que o Spring Boot autoconfigura a partir das propriedades spring.mail.* (Mailtrap, por enquanto).
-@Component
-@RequiredArgsConstructor
+/**
+ * Implementação de {@link EmailService} que envia de verdade via SMTP, usando o
+ * {@link JavaMailSender} que o Spring Boot autoconfigura a partir das propriedades
+ * {@code spring.mail.*} (Mailtrap, por enquanto).
+ */
+@Component // Registra a classe como bean gerenciado pelo Spring - é essa implementação que será injetada onde EmailService for pedido
+@RequiredArgsConstructor // Lombok: gera um construtor com todos os campos "final" (injeção via construtor)
 public class SmtpEmailService implements EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Override
+    /**
+     * Monta e envia um e-mail de texto simples com a senha temporária.
+     *
+     * @param to e-mail do destinatário
+     * @param temporaryPassword senha temporária em texto puro
+     */
+    @Override // Sobrescreve o método da interface EmailService
     public void sendTemporaryPassword(String to, String temporaryPassword){
         SimpleMailMessage message = new SimpleMailMessage();
         // Destinatário: o e-mail cadastrado do usuário recém-criado.

@@ -8,20 +8,27 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
-// Informa ao auditing do Spring Data JPA (@CreatedBy/@LastModifiedBy) quem é o "usuário atual".
-// Registrado como bean para que @EnableJpaAuditing(auditorAwareRef = "springSecurityAuditorAware") o encontre.
-@Component
+/**
+ * Informa ao auditing do Spring Data JPA (@CreatedBy/@LastModifiedBy) quem é o "usuário atual".
+ * Registrado como bean para que {@code @EnableJpaAuditing(auditorAwareRef = "springSecurityAuditorAware")}
+ * (ver {@link arajou.br.com.help_desk.HelpDeskApplication}) o encontre pelo nome.
+ */
+@Component // Registra a classe como bean gerenciado pelo Spring, injetável em outros componentes
 public class SpringSecurityAuditorAware implements AuditorAware<String> {
 
-    @Override
+    /**
+     * Retorna o identificador (e-mail) do usuário autenticado no momento, usado para
+     * preencher automaticamente os campos createdBy/updatedBy das entidades.
+     *
+     * @return o e-mail do usuário logado, ou "system" quando não há usuário autenticado
+     */
+    @Override // Sobrescreve o método da interface AuditorAware<String>
     public Optional<String> getCurrentAuditor() {
         // Lê quem o Spring Security tem autenticado no momento para essa requisição/thread.
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        // Ainda não existe login configurado, então nunca há um usuário autenticado de verdade aqui -
-        // por enquanto sempre cai no fallback "system". Quando a Security for configurada (JWT/login),
-        // authentication vai conter o usuário logado real e esse mesmo código passa a devolver o
-        // nome dele automaticamente, sem precisar mudar nada aqui.
+        // Sem autenticação (requisição anônima, ex: chamadas antes do login, ou contexto
+        // de testes) cai no fallback "system" em vez de lançar erro ou deixar nulo.
         if (authentication == null || !authentication.isAuthenticated()
                 || authentication instanceof AnonymousAuthenticationToken) {
             return Optional.of("system");

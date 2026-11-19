@@ -7,6 +7,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Corpo da requisição de cadastro de usuário ({@code POST /users}, feito pelo MANAGER).
+ * Propositalmente não tem campo de senha - o sistema gera uma temporária sozinho
+ * (ver {@link arajou.br.com.help_desk.user.service.UserService#save(arajou.br.com.help_desk.user.model.UserModel)}).
+ */
 public record UserCreatedDTO(
         @NotBlank(message = "Required field")
         String firstName,

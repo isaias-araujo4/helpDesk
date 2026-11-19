@@ -1,6 +1,8 @@
 package arajou.br.com.help_desk.exception;
 
-// Representa o erro de um campo específico dentro de um ErrorResponse
-// (ex: {"field": "email", "error": "Invalid email"}).
+/**
+ * Representa o erro de um campo específico dentro de um {@link ErrorResponse}
+ * (ex: {@code {"field": "email", "error": "Invalid email"}}).
+ */
 public record FieldError(String field, String error) {
 }

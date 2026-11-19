@@ -19,16 +19,27 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 
-@RestController
-@RequestMapping("users")
-@RequiredArgsConstructor
+/**
+ * Endpoints de gestão de usuários - todos exigem a permissão {@code MANAGE_USERS}
+ * (na prática, só o MANAGER tem essa permissão por padrão).
+ */
+@RestController // Combina @Controller + @ResponseBody: cada método devolve diretamente o corpo da resposta (JSON), não uma view
+@RequestMapping("users") // Prefixo comum de rota para todos os endpoints desta classe
+@RequiredArgsConstructor // Lombok: gera um construtor com todos os campos "final" (injeção via construtor)
 public class UserController implements GenericController {
 
     private final UserService userService;
     private final UserMapper userMapper;
 
-    @PostMapping
-    @PreAuthorize("hasAuthority('MANAGE_USERS')")
+    /**
+     * Cadastra um novo usuário. O cliente nunca envia senha - o sistema gera uma
+     * temporária e envia por e-mail.
+     *
+     * @param userCreatedDTO dados do novo usuário
+     * @return 201 com o header {@code Location} apontando para o usuário criado
+     */
+    @PostMapping // Mapeia POST /users para este método
+    @PreAuthorize("hasAuthority('MANAGE_USERS')") // Só executa se o usuário autenticado tiver essa permissão; senão, 403
     public ResponseEntity<Void> create(@RequestBody @Valid UserCreatedDTO userCreatedDTO){
         UserModel user = userMapper.toEntity(userCreatedDTO);
         UserModel saved = userService.save(user);
@@ -36,7 +47,13 @@ public class UserController implements GenericController {
         return ResponseEntity.created(location).build();
     }
 
-    @GetMapping("{id}")
+    /**
+     * Busca um usuário por id.
+     *
+     * @param id id do usuário
+     * @return 200 com os dados do usuário, ou 404 se não existir
+     */
+    @GetMapping("{id}") // Mapeia GET /users/{id} para este método
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<UserResponseDTO> findById(@PathVariable Long id){
         return userService.findById(id)
@@ -44,7 +61,14 @@ public class UserController implements GenericController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PutMapping("{id}")
+    /**
+     * Atualiza os dados de um usuário já existente (inclusive a role dele).
+     *
+     * @param id id do usuário a atualizar
+     * @param userUpdatedDTO novos dados
+     * @return 204 em caso de sucesso, ou 404 se o usuário não existir
+     */
+    @PutMapping("{id}") // Mapeia PUT /users/{id} para este método
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody @Valid UserUpdatedDTO userUpdatedDTO){
         return userService.findById(id)
@@ -57,7 +81,13 @@ public class UserController implements GenericController {
                 }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("{id}")
+    /**
+     * Desativa um usuário (soft delete - o registro nunca é removido do banco).
+     *
+     * @param id id do usuário a desativar
+     * @return 204 em caso de sucesso, ou 404 se o usuário não existir
+     */
+    @DeleteMapping("{id}") // Mapeia DELETE /users/{id} para este método
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> delete(@PathVariable Long id){
         return userService.findById(id)
@@ -67,7 +97,17 @@ public class UserController implements GenericController {
                 }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping
+    /**
+     * Busca paginada de usuários, com filtros opcionais por nome, sobrenome e setor(es).
+     *
+     * @param firstName filtro opcional por trecho do nome
+     * @param lastName filtro opcional por trecho do sobrenome
+     * @param departments filtro opcional por um ou mais setores
+     * @param page número da página (começando em 0)
+     * @param pageSize tamanho da página
+     * @return 200 com a página de usuários encontrados
+     */
+    @GetMapping // Mapeia GET /users para este método
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Page<UserResponseDTO>> search(
             @RequestParam(value = "firstName", required = false) String firstName,
@@ -82,7 +122,14 @@ public class UserController implements GenericController {
         return ResponseEntity.ok(userResponseDTOPage);
     }
 
-    @PostMapping("{id}/permissions/{permission}")
+    /**
+     * Concede uma permissão isolada a um usuário, além das que a role dele já dá.
+     *
+     * @param id id do usuário
+     * @param permission permissão a conceder
+     * @return 204 em caso de sucesso, ou 404 se o usuário não existir
+     */
+    @PostMapping("{id}/permissions/{permission}") // Mapeia POST /users/{id}/permissions/{permission}
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> addPermission(@PathVariable Long id, @PathVariable Permission permission){
         return userService.findById(id)
@@ -92,7 +139,14 @@ public class UserController implements GenericController {
                 }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("{id}/permissions/{permission}")
+    /**
+     * Remove uma permissão isolada de um usuário.
+     *
+     * @param id id do usuário
+     * @param permission permissão a remover
+     * @return 204 em caso de sucesso, ou 404 se o usuário não existir
+     */
+    @DeleteMapping("{id}/permissions/{permission}") // Mapeia DELETE /users/{id}/permissions/{permission}
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> removePermission(@PathVariable Long id, @PathVariable Permission permission){
         return userService.findById(id)
