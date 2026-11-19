@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
@@ -33,11 +32,14 @@ public class ReportService {
             TicketTheme theme,
             TicketStatus status
     ) {
-        LocalDateTime start = startDate.atStartOfDay();
-        LocalDateTime end = endDate.atTime(LocalTime.MAX);
+        Specification<Ticket> specs = Specification.where((root, query, cb) -> cb.conjunction());
 
-        Specification<Ticket> specs = Specification.where(TicketSpecs.createdOnBetween(start, end));
-
+        if (startDate != null) {
+            specs = specs.and(TicketSpecs.createdOnAfterOrEqual(startDate.atStartOfDay()));
+        }
+        if (endDate != null) {
+            specs = specs.and(TicketSpecs.createdOnBeforeOrEqual(endDate.atTime(LocalTime.MAX)));
+        }
         if (department != null) {
             specs = specs.and(TicketSpecs.customerDepartmentEquals(department));
         }

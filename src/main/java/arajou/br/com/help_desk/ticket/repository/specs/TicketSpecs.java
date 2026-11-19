@@ -30,8 +30,12 @@ public class TicketSpecs {
         );
     }
 
-    public static  Specification<Ticket> createdOnBetween(LocalDateTime start, LocalDateTime end){
-        return (root, query, cb) -> cb.between(root.get("createdOn"), start, end);
+    public static Specification<Ticket> createdOnAfterOrEqual(LocalDateTime start){
+        return (root, query, cb) -> cb.greaterThanOrEqualTo(root.get("createdOn"), start);
+    }
+
+    public static Specification<Ticket> createdOnBeforeOrEqual(LocalDateTime end){
+        return (root, query, cb) -> cb.lessThanOrEqualTo(root.get("createdOn"), end);
     }
 
     public static Specification<Ticket> customerDepartmentEquals(Department department){
