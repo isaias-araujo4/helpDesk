@@ -23,8 +23,8 @@ import java.time.LocalTime;
  * está autenticado - esse detalhe vem do mesmo {@link AuditorAware} já usado para preencher
  * {@code createdBy}/{@code updatedBy} nas outras entidades.
  */
-@Service
-@RequiredArgsConstructor
+@Service // Registra a classe como bean de camada de serviço, gerenciado pelo Spring
+@RequiredArgsConstructor // Lombok: gera um construtor com todos os campos "final" (injeção via construtor)
 public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;

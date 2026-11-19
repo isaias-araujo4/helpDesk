@@ -23,9 +23,9 @@ import java.time.LocalDate;
  * gravadas internamente pelo {@code TicketService}/{@code UserService} via
  * {@link AuditLogService#record}).
  */
-@RestController
-@RequestMapping("audit-logs")
-@RequiredArgsConstructor
+@RestController // Combina @Controller + @ResponseBody: cada método devolve diretamente o corpo da resposta (JSON), não uma view
+@RequestMapping("audit-logs") // Prefixo comum de rota para todos os endpoints desta classe (vira /api/v1/audit-logs - ver WebConfig)
+@RequiredArgsConstructor // Lombok: gera um construtor com todos os campos "final" (injeção via construtor)
 public class AuditLogController {
 
     // Limite máximo de itens por página - evita que um cliente peça pageSize=999999 e
@@ -47,7 +47,7 @@ public class AuditLogController {
      * @param pageSize tamanho da página
      * @return 200 com a página de entradas encontradas, mais recentes primeiro
      */
-    @GetMapping
+    @GetMapping // Mapeia GET /audit-logs para este método
     @PreAuthorize("hasAuthority('VIEW_AUDIT_LOGS')") // Só MANAGER tem essa permissão por padrão
     public ResponseEntity<Page<AuditLogResponseDTO>> search(
             @RequestParam(required = false) AuditEntityType entityType,
