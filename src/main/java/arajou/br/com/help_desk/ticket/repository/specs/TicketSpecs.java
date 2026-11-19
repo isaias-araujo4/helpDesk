@@ -3,7 +3,10 @@ package arajou.br.com.help_desk.ticket.repository.specs;
 import arajou.br.com.help_desk.ticket.model.Ticket;
 import arajou.br.com.help_desk.ticket.model.enums.TicketStatus;
 import arajou.br.com.help_desk.ticket.model.enums.TicketTheme;
+import arajou.br.com.help_desk.user.model.enums.Department;
 import org.springframework.data.jpa.domain.Specification;
+
+import java.time.LocalDateTime;
 
 public class TicketSpecs {
     public static Specification<Ticket> statusEquals(TicketStatus status) {
@@ -25,5 +28,13 @@ public class TicketSpecs {
                 cb.equal(root.get("status"), TicketStatus.PENDING),
                 cb.equal(root.get("technician").get("id"), technicianId)
         );
+    }
+
+    public static  Specification<Ticket> createdOnBetween(LocalDateTime start, LocalDateTime end){
+        return (root, query, cb) -> cb.between(root.get("createdOn"), start, end);
+    }
+
+    public static Specification<Ticket> customerDepartmentEquals(Department department){
+        return (root, query, cb) -> cb.equal(root.get("customer").get("department"), department);
     }
 }

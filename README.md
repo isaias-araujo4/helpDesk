@@ -10,7 +10,6 @@ Projeto de estudo/portfólio, construído de forma incremental.
 |---|---|
 | Usuários (cadastro, autenticação, autorização) | ✅ Completo |
 | Chamados (tickets) | ✅ Completo |
-| Denúncias | 🚧 Planejado |
 | Relatórios e métricas | 🚧 Planejado |
 
 ## Tecnologias

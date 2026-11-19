@@ -37,8 +37,7 @@ public class DataSeeder implements CommandLineRunner {
                 Permission.VIEW_OWN_TICKETS,
                 Permission.REOPEN_TICKET,
                 Permission.CLOSE_TICKET,
-                Permission.CANCEL_TICKET,
-                Permission.CREATE_COMPLAINT
+                Permission.CANCEL_TICKET
         ));
 
         Set<Permission> technicianPermissions = Set.of(
