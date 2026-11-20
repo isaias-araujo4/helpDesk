@@ -20,6 +20,7 @@ public enum Permission {
     COMMENT_TICKET,
     RESOLVE_TICKET,
     MANAGE_USERS,
+    REACTIVATE_USER,
     VIEW_AUDIT_LOGS,
     VIEW_REPORTS
 }

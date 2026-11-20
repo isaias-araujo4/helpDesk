@@ -102,6 +102,23 @@ public class UserController implements GenericController {
     }
 
     /**
+     * Reativa um usuário previamente desativado (soft delete revertido) - mesmo registro,
+     * mesmo e-mail, histórico preservado.
+     *
+     * @param id id do usuário a reativar
+     * @return 204 em caso de sucesso, 404 se não existir, ou 409 se já estiver ativo
+     */
+    @PostMapping("{id}/reactivate") // Mapeia POST /users/{id}/reactivate para este método
+    @PreAuthorize("hasAuthority('REACTIVATE_USER')")
+    public ResponseEntity<Void> reactivate(@PathVariable Long id){
+        UserModel userModel = userService.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+
+        userService.reactivate(userModel);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * Busca paginada de usuários, com filtros opcionais por nome, sobrenome e setor(es).
      *
      * @param firstName filtro opcional por trecho do nome

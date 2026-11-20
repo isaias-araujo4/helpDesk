@@ -77,6 +77,8 @@ Diferente de `createdBy`/`updatedBy` (que só guardam a **última** pessoa a mex
 
 Toda entidade registra automaticamente quem criou/atualizou e quando (`createdBy`/`createdOn`/`updatedBy`/`updatedOn`, via Spring Data Auditing). Exclusão de usuário é sempre **soft delete**: o registro nunca é removido do banco, só marcado como inativo.
 
+O e-mail de um usuário desativado permanece **permanentemente** amarrado àquele registro — não existe cadastro novo com o mesmo e-mail de alguém já desativado (a constraint `UNIQUE` não distingue ativo/inativo, de propósito). Decisão intencional pensando num cenário corporativo: reaproveitar o e-mail de alguém desligado para uma pessoa diferente misturaria o histórico (chamados, auditoria, ações) das duas pessoas sob a mesma identidade. Se a pessoa original voltar, o caminho é **reativar o mesmo registro** (`POST /api/v1/users/{id}/reactivate`), nunca criar um usuário novo com aquele e-mail.
+
 ### Seed inicial
 
 Na primeira vez que a aplicação sobe com o banco vazio, são criados automaticamente: as roles padrão (`CUSTOMER`, `TECHNICIAN`, `MANAGER`, com as permissões correspondentes) e um usuário `MANAGER` inicial, com senha temporária impressa no console — necessário pra poder logar e começar a cadastrar os demais usuários.
@@ -111,17 +113,18 @@ Todos os endpoints de negócio vivem sob o prefixo `/api/v1`, aplicado automatic
 
 ### Usuários (`/api/v1/users`)
 
-Todos exigem a permissão `MANAGE_USERS`.
+Todos exigem a permissão `MANAGE_USERS`, exceto a reativação, que tem permissão própria (`REACTIVATE_USER`).
 
-| Método | Rota | Descrição |
-|---|---|---|
-| POST | `/api/v1/users` | Cadastra um novo usuário |
-| GET | `/api/v1/users/{id}` | Busca um usuário por id |
-| GET | `/api/v1/users` | Busca paginada, com filtros opcionais `firstName`, `lastName`, `department` (múltiplo), `page`, `pageSize` (máx. 100) |
-| PUT | `/api/v1/users/{id}` | Atualiza um usuário |
-| DELETE | `/api/v1/users/{id}` | Desativa um usuário (soft delete) |
-| POST | `/api/v1/users/{id}/permissions/{permission}` | Concede uma permissão isolada ao usuário |
-| DELETE | `/api/v1/users/{id}/permissions/{permission}` | Remove uma permissão isolada do usuário |
+| Método | Rota | Descrição | Permissão |
+|---|---|---|---|
+| POST | `/api/v1/users` | Cadastra um novo usuário | `MANAGE_USERS` |
+| GET | `/api/v1/users/{id}` | Busca um usuário por id | `MANAGE_USERS` |
+| GET | `/api/v1/users` | Busca paginada, com filtros opcionais `firstName`, `lastName`, `department` (múltiplo), `page`, `pageSize` (máx. 100) | `MANAGE_USERS` |
+| PUT | `/api/v1/users/{id}` | Atualiza um usuário | `MANAGE_USERS` |
+| DELETE | `/api/v1/users/{id}` | Desativa um usuário (soft delete) | `MANAGE_USERS` |
+| POST | `/api/v1/users/{id}/reactivate` | Reativa um usuário desativado (mesmo registro, mesmo e-mail e histórico) | `REACTIVATE_USER` |
+| POST | `/api/v1/users/{id}/permissions/{permission}` | Concede uma permissão isolada ao usuário | `MANAGE_USERS` |
+| DELETE | `/api/v1/users/{id}/permissions/{permission}` | Remove uma permissão isolada do usuário | `MANAGE_USERS` |
 
 ### Chamados (`/api/v1/tickets`)
 

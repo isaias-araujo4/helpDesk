@@ -61,6 +61,7 @@ public class DataSeeder implements CommandLineRunner { // CommandLineRunner: o S
 
         Set<Permission> managerPermissions = new HashSet<>(technicianPermissions);
         managerPermissions.add(Permission.MANAGE_USERS);
+        managerPermissions.add(Permission.REACTIVATE_USER);
         managerPermissions.add(Permission.VIEW_AUDIT_LOGS);
         managerPermissions.add(Permission.VIEW_REPORTS);
         Role managerRole = createRole("MANAGER", managerPermissions);

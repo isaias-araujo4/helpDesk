@@ -135,6 +135,22 @@ public class UserService {
     }
 
     /**
+     * Reativa um usuário previamente desativado: volta {@code active} para {@code true} e
+     * limpa os campos de soft delete. O e-mail e o histórico permanecem os mesmos (é o
+     * MESMO registro, não um cadastro novo) - ver {@link UserValidator#validateReactivate}.
+     *
+     * @param userModel usuário a ser reativado
+     */
+    public void reactivate(UserModel userModel){
+        userValidator.validateReactivate(userModel);
+        userModel.setActive(true);
+        userModel.setDeletedBy(null);
+        userModel.setDeletedOn(null);
+        userRepository.save(userModel);
+        auditLogService.record(AuditAction.USER_REACTIVATED, AuditEntityType.USER, userModel.getId(), null);
+    }
+
+    /**
      * Busca paginada de usuários, com filtros opcionais e independentes entre si (só
      * entram no WHERE os que forem informados).
      *

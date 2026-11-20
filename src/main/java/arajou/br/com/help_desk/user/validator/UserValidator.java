@@ -1,6 +1,7 @@
 package arajou.br.com.help_desk.user.validator;
 
 import arajou.br.com.help_desk.exception.DuplicatedRecordException;
+import arajou.br.com.help_desk.exception.OperationNotAllowedException;
 import arajou.br.com.help_desk.user.model.UserModel;
 import arajou.br.com.help_desk.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -63,5 +64,17 @@ public class UserValidator {
         }
 
         return found.map(UserModel::getId).stream().anyMatch(id -> !id.equals(userModel.getId()));
+    }
+
+    /**
+     * Regra: só faz sentido reativar um usuário que está atualmente inativo - evita uma
+     * reativação "vazia" (e um registro de auditoria confuso) sobre quem já está ativo.
+     *
+     * @param userModel usuário a ser reativado
+     */
+    public void validateReactivate(UserModel userModel){
+        if (Boolean.TRUE.equals(userModel.getActive())){
+            throw new OperationNotAllowedException("User is already active.");
+        }
     }
 }
