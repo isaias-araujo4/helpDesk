@@ -12,7 +12,7 @@ Projeto de estudo/portfólio, construído de forma incremental.
 | Chamados (tickets) | ✅ Completo |
 | Relatórios e métricas (com exportação Excel/PDF) | ✅ Completo |
 | Log de auditoria | ✅ Completo |
-| Testes automatizados | 🚧 Planejado (aguardando instalação do Docker pra usar Testcontainers) |
+| Testes automatizados | ✅ Completo |
 
 > O módulo de Denúncias, previsto na especificação original, foi removido do escopo por decisão própria.
 
@@ -31,6 +31,8 @@ Projeto de estudo/portfólio, construído de forma incremental.
 - **Apache POI** / **OpenPDF** — exportação de relatórios em Excel/PDF
 - Carregamento de `.env` via um `EnvironmentPostProcessor` próprio (a lib `spring-dotenv` não funciona com o Spring Boot 4.1.1)
 - **Docker** / **Docker Compose** — containerização da aplicação + banco
+- **JUnit 5** / **Mockito** — testes unitários
+- **Testcontainers** — testes de integração contra um MySQL real, descartável
 - **GitHub Actions** — pipeline de CI
 - **Maven**
 
@@ -101,6 +103,15 @@ Com a aplicação rodando, acesse:
 ### Versionamento de API
 
 Todos os endpoints de negócio vivem sob o prefixo `/api/v1`, aplicado automaticamente a todos os controllers (não precisa repetir em cada um). Endpoints de infraestrutura (Swagger, Actuator) ficam fora desse prefixo, por convenção.
+
+### Testes automatizados
+
+Dois tipos, com propósitos diferentes:
+
+- **Unitários** (JUnit 5 + Mockito) — testam uma única classe isolada, sem banco, sem Spring, sem rede. Cobrem os Validators (`TicketValidator`, `UserValidator`), onde moram as regras de negócio. Dependências externas (ex: `UserRepository`, no caso do `UserValidator`) são "fingidas" com Mockito, pra manter o teste rápido e focado só na lógica da classe.
+- **De integração** (`@SpringBootTest` + `MockMvc` + **Testcontainers**) — sobem a aplicação inteira contra um **MySQL real**, rodando num container Docker descartável, e simulam requisições HTTP de verdade (Controller → Service → Validator → banco), incluindo segurança, validação e os códigos de status HTTP. Cobrem os fluxos principais: login (sucesso, senha errada, bloqueio por força bruta), CRUD de usuário (conflito de duplicidade, 404, desativar/reativar) e o ciclo de vida do chamado (criar → assumir → resolver → fechar, com as checagens de permissão e de dono).
+
+Rodar localmente: `./mvnw test` (exige o **Docker rodando**, por causa do Testcontainers) ou `./mvnw clean verify` (mesmo comando usado no CI).
 
 ## Endpoints
 
@@ -205,8 +216,4 @@ Sobe a aplicação **e** o MySQL juntos, sem precisar instalar nada além do Doc
 
 ## CI
 
-Todo push/PR pra `main` roda automaticamente (`.github/workflows/ci.yml`): sobe um MySQL de serviço e executa `mvn clean verify`, pra garantir que o projeto sempre compila (e futuramente, que os testes passam).
-
-## Próximos passos
-
-- **Testes automatizados** (unitários com JUnit 5 + Mockito para os Validators, e de integração com `@SpringBootTest`/`MockMvc` + Testcontainers para os fluxos completos) — aguardando a virtualização de hardware ser habilitada na BIOS da máquina de desenvolvimento, necessária pro Docker (e, por consequência, pro Testcontainers) funcionar.
+Todo push/PR pra `main` roda automaticamente (`.github/workflows/ci.yml`): sobe um MySQL de serviço e executa `mvn clean verify`, rodando a suíte de testes completa (unitários + integração) a cada mudança.
