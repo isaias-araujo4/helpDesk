@@ -56,4 +56,6 @@ jobs:
           cache: maven
 
       - name: Build and run tests
-        run: ./mvnw -B clean verify
+        run: |
+          chmod +x mvnw
+          ./mvnw -B clean verify
